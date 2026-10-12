@@ -83,6 +83,10 @@ if DATABASES["default"]["ENGINE"] != "django.db.backends.sqlite3":
 
 AUTH_USER_MODEL = "accounts.User"
 
+LOGIN_URL = "/giris/"
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},

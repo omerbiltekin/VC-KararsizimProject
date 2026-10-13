@@ -1,5 +1,5 @@
-<div class="decision-bar" role="img" aria-label="Oy dağılımı">
-  {% if results.total %}
+<div class="decision-bar" data-decision-bar role="img" aria-label="Oy dağılımı">
+  {% if results.reveal and results.total %}
     {% for option in results.options %}
       {% if option.percent %}
         <span class="decision-bar__segment decision-bar__segment--{{ option.position }}" style="width: {{ option.percent }}%">
@@ -9,4 +9,4 @@
     {% endfor %}
   {% endif %}
 </div>
-<p class="badge badge--{{ results.badge_level }}">{{ results.badge_text }}</p>
+<p class="badge badge--{{ results.badge_level }}" data-badge>{{ results.badge_text }}</p>

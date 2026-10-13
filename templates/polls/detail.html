@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load poll_extras %}
+{% load static poll_extras %}
 
 {% block title %}{{ poll.question }} — Kararsızım{% endblock %}
 
@@ -12,12 +12,44 @@
     </p>
     <h1 class="poll-detail__question">{{ poll.question }}</h1>
     {% if poll.description %}<p class="poll-detail__description">{{ poll.description }}</p>{% endif %}
-    {% include "partials/decision_bar.html" %}
-    <ul class="option-list">
-      {% for option in results.options %}
-        {% include "partials/option_row.html" %}
-      {% endfor %}
-    </ul>
-    <p class="poll-card__footer"><span class="mono">{{ poll.total_votes }}</span> kişi oy verdi</p>
+    {% if not poll.is_open %}<p class="notice">Bu anket kapandı.</p>{% endif %}
+
+    <div data-results-region aria-live="polite">
+      {% include "partials/decision_bar.html" %}
+      {% if can_vote %}
+        <form method="post" action="{% url 'polls:vote' poll.public_id %}" data-vote-form>
+          {% csrf_token %}
+          <ul class="option-list">
+            {% for option in results.options %}
+              {% include "partials/option_row.html" %}
+            {% endfor %}
+          </ul>
+        </form>
+      {% else %}
+        <ul class="option-list">
+          {% for option in results.options %}
+            {% include "partials/option_row.html" %}
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+
+    <p class="poll-card__footer"><span class="mono" data-total-votes>{{ poll.total_votes }}</span> kişi oy verdi</p>
+
+    {% if is_author %}
+      <div class="owner-actions">
+        {% if poll.is_open %}
+          <form method="post" action="{% url 'polls:close' poll.public_id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn--secondary">Anketi kapat</button>
+          </form>
+        {% endif %}
+        <a class="btn btn--secondary" href="{% url 'polls:delete' poll.public_id %}">Anketi sil</a>
+      </div>
+    {% endif %}
   </article>
+{% endblock %}
+
+{% block scripts %}
+  {% if can_vote %}<script src="{% static 'js/vote.js' %}" defer></script>{% endif %}
 {% endblock %}

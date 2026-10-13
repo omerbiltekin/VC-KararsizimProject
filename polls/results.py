@@ -29,30 +29,58 @@ def _badge(percents, total):
     return "clear", BADGE_CLEAR
 
 
-def build_results(poll):
+def build_results(poll, reveal=True):
+    """reveal=False iken sayı ve yüzde hiç üretilmez; şablona sızamaz."""
     options = list(poll.options.all())
     counts = [option.vote_count for option in options]
     total = sum(counts)
     percents = calculate_percentages(counts)
     level, text = _badge(percents, total)
+
+    rows = []
+    for option, percent in zip(options, percents):
+        row = {"id": option.id, "text": option.text, "position": option.position}
+        if reveal:
+            row.update(count=option.vote_count, percent=percent)
+        rows.append(row)
+
     return {
         "total": total,
-        "options": [
-            {
-                "id": option.id,
-                "text": option.text,
-                "position": option.position,
-                "count": option.vote_count,
-                "percent": percent,
-            }
-            for option, percent in zip(options, percents)
-        ],
+        "reveal": reveal,
+        "options": rows,
         "badge_level": level,
         "badge_text": text,
     }
 
 
-def attach_results(polls):
+def can_see_results(poll, *, viewer_id, voted):
+    return (not poll.is_open) or voted or poll.author_id == viewer_id
+
+
+def attach_results(polls, *, viewer_id=None, voted_poll_ids=frozenset()):
     for poll in polls:
-        poll.results = build_results(poll)
+        reveal = can_see_results(
+            poll, viewer_id=viewer_id, voted=poll.id in voted_poll_ids
+        )
+        poll.results = build_results(poll, reveal=reveal)
     return polls
+
+
+def results_payload(poll, *, voted_option_id, reveal):
+    results = build_results(poll, reveal=reveal)
+    return {
+        "total": results["total"],
+        "options": [
+            {
+                "id": row["id"],
+                "text": row["text"],
+                "count": row.get("count"),
+                "percent": row.get("percent"),
+            }
+            for row in results["options"]
+        ],
+        "voted_option_id": voted_option_id,
+        "is_open": poll.is_open,
+        "badge_level": results["badge_level"],
+        "badge_text": results["badge_text"],
+    }

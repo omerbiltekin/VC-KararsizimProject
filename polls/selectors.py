@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
-from .models import Poll
+from .models import Poll, Vote
 
 FEED_PAGE_SIZE = 20
 MAX_PAGE = 50
@@ -64,3 +64,32 @@ def paginate_cumulative(queryset, page):
     limit = page * FEED_PAGE_SIZE
     items = list(queryset[: limit + 1])
     return items[:limit], len(items) > limit
+
+
+def get_poll(public_id):
+    return (
+        Poll.objects.select_related("author")
+        .prefetch_related("options")
+        .filter(public_id=public_id)
+        .first()
+    )
+
+
+def find_vote(poll, user, voter_key):
+    votes = Vote.objects.filter(poll=poll)
+    if user is not None:
+        return votes.filter(user=user).first()
+    if voter_key:
+        return votes.filter(user__isnull=True, voter_key=voter_key).first()
+    return None
+
+
+def voted_poll_ids(poll_ids, user, voter_key):
+    votes = Vote.objects.filter(poll_id__in=poll_ids)
+    if user is not None:
+        votes = votes.filter(user=user)
+    elif voter_key:
+        votes = votes.filter(user__isnull=True, voter_key=voter_key)
+    else:
+        return set()
+    return set(votes.values_list("poll_id", flat=True))

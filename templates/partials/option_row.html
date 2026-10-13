@@ -1,4 +1,9 @@
-<li class="option-row option-row--{{ option.position }}">
-  <span class="option-row__text">{{ option.text }}</span>
-  <span class="option-row__percent mono">%{{ option.percent }}</span>
+<li class="option-row option-row--{{ option.position }}{% if can_vote %} option-row--votable{% endif %}{% if results.reveal %} option-row--revealed{% endif %}{% if option.id == voted_option_id %} option-row--mine{% endif %}" data-option-id="{{ option.id }}">
+  <span class="option-row__fill" style="width: {% if results.reveal %}{{ option.percent }}{% else %}0{% endif %}%"></span>
+  {% if can_vote %}<button type="submit" name="option_id" value="{{ option.id }}" class="option-row__body">{% else %}<div class="option-row__body">{% endif %}
+    <span class="option-row__check" aria-hidden="true">✓</span>
+    <span class="option-row__text">{{ option.text }}</span>
+    <span class="option-row__percent mono"{% if not results.reveal %} hidden{% endif %}>%{{ option.percent }}</span>
+    {% if option.id == voted_option_id %}<span class="sr-only">Senin oyun</span>{% endif %}
+  {% if can_vote %}</button>{% else %}</div>{% endif %}
 </li>

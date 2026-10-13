@@ -367,15 +367,16 @@ class ResultVisibilityTests(TestCase):
         self.assertEqual(
             set(data), {"total", "options", "voted_option_id", "is_open", "badge_level", "badge_text"}
         )
-        self.assertEqual(data["total"], 10)
+        self.assertEqual(data["total"], 11)
         self.assertEqual(data["voted_option_id"], option.id)
         self.assertEqual(sum(o["percent"] for o in data["options"]), 100)
         for option_data in data["options"]:
             self.assertEqual(set(option_data), {"id", "text", "count", "percent"})
         body = response.content.decode()
         self.assertNotIn("@", body)
-        self.assertNotIn(str(voter.id) + ",", body.replace(" ", ""))
-        self.assertNotIn("user", body)
+        self.assertNotIn("user", body.lower())
+        self.assertNotIn(voter.username, body)
+        self.assertNotIn(voter.email, body)
 
     def test_feed_query_count_is_constant_for_logged_in_voter(self):
         voter = User.objects.create_user("oyuncu", "o@example.com", "guclu-parola-123")

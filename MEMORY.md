@@ -53,31 +53,29 @@ Bu dosya, projenin mevcut durumunu, tamamlanan fazları, mimari kararları ve de
 
 ---
 
-## 3. Sırada Bekleyen: Faz 6 — Vercel'e Deployment
+### ✅ Faz 6 — Vercel'e Deployment Hazırlığı
+- `config/settings.py` içerisine production güvenlik ayarları (`SECURE_PROXY_SSL_HEADER`, `SECURE_SSL_REDIRECT`, `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE`) eklendi. Test runner sırasında SSL yönlendirmesinin testleri kırmaması sağlandı.
+- Modern Vercel standardına uygun `vercel.json` oluşturuldu (`config/wsgi.py` fonksiyonu, `maxDuration: 30`).
+- Kapsamlı `docs/DEPLOY.md` rehberi oluşturuldu (Supabase Transaction vs Session Pooler farkı, yerel migration komutları, ortam değişkenleri ve deployment adımları).
+- Test paketi (59 test) eksiksiz doğrulandı.
 
-Şartname Bölüm 8 (Faz 6) ve Bölüm 11 doğrultusunda canlıya çıkış adımları:
+---
 
-### Hazırlık ve Kurallar:
-1. **Sıfır Konfigürasyon:** Vercel Django desteği için gereksiz eski wrapper dosyaları (`api/index.py` vb.) yazılmayacak. `settings.py` içerisindeki `WSGI_APPLICATION = "config.wsgi.application"` ve `STATIC_ROOT` yeterlidir.
-2. **Production Ayarları:**
-   - `SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")`
-   - `SESSION_COOKIE_SECURE = True`
-   - `CSRF_COOKIE_SECURE = True`
-   - `SECURE_SSL_REDIRECT = True`
-3. **Supabase Bağlantısı:**
-   - Production runtime'da `DATABASE_URL` olarak Supabase **Transaction Pooler (port 6543)** kullanılacak.
-   - `CONN_MAX_AGE = 0`, `DISABLE_SERVER_SIDE_CURSORS = True` ve `prepare_threshold = None` ayarlarının devrede olduğu teyit edilecek.
-4. **Vercel Ortam Değişkenleri:**
-   - `DJANGO_SECRET_KEY`: Güçlü rastgele anahtar.
-   - `DJANGO_DEBUG`: `False`
-   - `DJANGO_ALLOWED_HOSTS`: `.vercel.app` (veya özel domain)
-   - `DJANGO_CSRF_TRUSTED_ORIGINS`: `https://*.vercel.app`
-   - `VOTER_KEY_SALT`: Canlı için özel rastgele tuz.
-   - `DATABASE_URL`: Supabase port 6543 bağlantı dizesi.
-5. **Deployment Süreci:**
-   - Gerekirse `vercel.json` (maxDuration vb. için) hazırlanacak.
-   - `docs/DEPLOY.md` rehberi oluşturulacak (migration'ların canlı build'de değil yerelden Session pooler ile nasıl çalıştırılacağı belgelenecek).
-   - Vercel CLI veya GitHub entegrasyonu üzerinden deploy başlatılacak.
+## 2. Test Durumu
+- Django test suite'i (`python manage.py test`) altında toplam **59 test** bulunmaktadır.
+- Tüm testler eksiksiz ve yeşil (**OK**) durumdadır.
+
+---
+
+## 3. Canlıya Çıkış Adımları (Deploy Aşamasında)
+
+1. **Git Değişikliklerinin Gönderilmesi:**
+   - Değişikliklerin `origin/main` branch'ine pushlanması.
+2. **Vercel Entegrasyonu & Environment Variables:**
+   - Vercel Dashboard üzerinden projeyi import etmek veya `npx vercel` komutunu çalıştırmak.
+   - Gerekli 6 adet ortam değişkeninin (`DJANGO_SECRET_KEY`, `DJANGO_DEBUG=False`, `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS`, `VOTER_KEY_SALT`, `DATABASE_URL`) Vercel'e girilmesi.
+3. **Canlı Doğrulama (Smoke Test):**
+   - Canlı URL üzerinden kayıt olma, anket oluşturma, oy kullanma ve 404 testleri.
 
 ---
 
@@ -86,3 +84,4 @@ Bu dosya, projenin mevcut durumunu, tamamlanan fazları, mimari kararları ve de
 - Kayıt formunda honeypot alanı (spam bot koruması).
 - Anket paylaş butonu (`navigator.share` / panoya kopyalama).
 - Soru arama (`icontains`).
+

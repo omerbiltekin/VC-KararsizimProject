@@ -27,6 +27,16 @@ CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
 
 VOTER_KEY_SALT = os.environ.get("VOTER_KEY_SALT", "dev-only-voter-salt")
 
+import sys
+
+IS_TESTING = len(sys.argv) > 1 and sys.argv[1] == "test"
+
+if not DEBUG and not IS_TESTING:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = os.environ.get("DJANGO_SECURE_SSL_REDIRECT", "true").lower() in ("1", "true", "yes")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
 
 INSTALLED_APPS = [
     "django.contrib.admin",

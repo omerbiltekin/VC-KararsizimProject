@@ -53,11 +53,17 @@ Bu dosya, projenin mevcut durumunu, tamamlanan fazları, mimari kararları ve de
 
 ---
 
-### ✅ Faz 6 — Vercel'e Deployment Hazırlığı
+### ✅ Faz 6 — Vercel'e Deployment (`f4c5971` & Canlı)
+- Canlı URL: **`https://vc-kararsizim-project.vercel.app`**
 - `config/settings.py` içerisine production güvenlik ayarları (`SECURE_PROXY_SSL_HEADER`, `SECURE_SSL_REDIRECT`, `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE`) eklendi. Test runner sırasında SSL yönlendirmesinin testleri kırmaması sağlandı.
 - Modern Vercel standardına uygun `vercel.json` oluşturuldu (`config/wsgi.py` fonksiyonu, `maxDuration: 30`).
-- Kapsamlı `docs/DEPLOY.md` rehberi oluşturuldu (Supabase Transaction vs Session Pooler farkı, yerel migration komutları, ortam değişkenleri ve deployment adımları).
-- Test paketi (59 test) eksiksiz doğrulandı.
+- Kapsamlı `docs/DEPLOY.md` rehberi oluşturuldu.
+- Canlı ortam doğrulandı:
+  - Canlı URL üzerinden HTTP/2 200 yanıtı ve HSTS güvenlik başlıkları doğrulandı.
+  - Vercel CDN statik dosyaları (`/static/css/base.css`, logolar, fontlar) başarıyla servis ediyor (404 yok).
+  - Supabase Transaction Pooler (port 6543) üzerinden canlı veriler (demo anketler ve oylar) listeleniyor.
+  - `DEBUG=False` ve özel `404.html` sayfası çalışıyor.
+  - Soğuk başlangıç hatası (cold start 500) olmadan bağlantı havuzu stabil çalışıyor.
 
 ---
 
@@ -67,21 +73,11 @@ Bu dosya, projenin mevcut durumunu, tamamlanan fazları, mimari kararları ve de
 
 ---
 
-## 3. Canlıya Çıkış Adımları (Deploy Aşamasında)
-
-1. **Git Değişikliklerinin Gönderilmesi:**
-   - Değişikliklerin `origin/main` branch'ine pushlanması.
-2. **Vercel Entegrasyonu & Environment Variables:**
-   - Vercel Dashboard üzerinden projeyi import etmek veya `npx vercel` komutunu çalıştırmak.
-   - Gerekli 6 adet ortam değişkeninin (`DJANGO_SECRET_KEY`, `DJANGO_DEBUG=False`, `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS`, `VOTER_KEY_SALT`, `DATABASE_URL`) Vercel'e girilmesi.
-3. **Canlı Doğrulama (Smoke Test):**
-   - Canlı URL üzerinden kayıt olma, anket oluşturma, oy kullanma ve 404 testleri.
-
----
-
-## 4. İsteğe Bağlı Sonraki Adım: Faz 7 — Sertleştirme
+## 3. İsteğe Bağlı Sonraki Adım: Faz 7 — Sertleştirme
 - Anonim oylar için IP hash tabanlı saatlik hız sınırı (rate limit).
 - Kayıt formunda honeypot alanı (spam bot koruması).
 - Anket paylaş butonu (`navigator.share` / panoya kopyalama).
 - Soru arama (`icontains`).
+- Anket süresi (`closes_at`) dolduğunda görünümde otomatik kapatma kontrolü.
+
 

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <rect width="1200" height="630" fill="#FAF9FF"/>
+  <rect x="80" y="80" width="1040" height="470" rx="28" fill="#FFFFFF" stroke="rgba(22, 20, 58, 0.10)" stroke-width="2"/>
+  
+  <!-- Logo & Title -->
+  <rect x="140" y="140" width="64" height="64" rx="16" fill="#5B3DF5"/>
+  <circle cx="162" cy="172" r="8" fill="#00D19A"/>
+  <circle cx="182" cy="172" r="8" fill="#FF3D8B"/>
+  
+  <text x="225" y="185" font-family="'Bricolage Grotesque', sans-serif" font-weight="800" font-size="44" fill="#16143A">Kararsızım</text>
+  <text x="140" y="270" font-family="'Inter', sans-serif" font-weight="600" font-size="32" fill="#5B3DF5">Sen sor, kalabalık karar versin.</text>
+  <text x="140" y="325" font-family="'Inter', sans-serif" font-weight="400" font-size="24" fill="#6B6890">Kararsız kaldığın konuları topluluğa danış, anlık sonuçları gör.</text>
+
+  <!-- Decision bar mockup -->
+  <rect x="140" y="390" width="920" height="32" rx="16" fill="rgba(22, 20, 58, 0.10)"/>
+  <rect x="140" y="390" width="460" height="32" rx="16" fill="#5B3DF5"/>
+  <rect x="600" y="390" width="280" height="32" rx="0" fill="#FF3D8B"/>
+  <rect x="880" y="390" width="180" height="32" rx="16" fill="#00D19A"/>
+  
+  <rect x="140" y="445" width="220" height="36" rx="18" fill="#FAF9FF" stroke="rgba(22, 20, 58, 0.10)" stroke-width="1"/>
+  <text x="160" y="469" font-family="'Inter', sans-serif" font-weight="600" font-size="16" fill="#16143A">⚡ Kalabalık da kararsız</text>
+</svg>

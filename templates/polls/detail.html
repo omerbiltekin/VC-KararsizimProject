@@ -2,6 +2,8 @@
 {% load static poll_extras %}
 
 {% block title %}{{ poll.question }} — Kararsızım{% endblock %}
+{% block og_title %}{{ poll.question }}{% endblock %}
+{% block og_description %}{% if poll.description %}{{ poll.description }}{% else %}{{ poll.question }} — Kararsızım'da oyla!{% endif %}{% endblock %}
 
 {% block content %}
   <article class="card poll-detail">

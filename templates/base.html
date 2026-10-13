@@ -4,7 +4,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Kararsızım{% endblock %}</title>
+  <title>{% block title %}Kararsızım — Sen sor, kalabalık karar versin{% endblock %}</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/logo.svg' %}">
+  
+  <!-- Open Graph / Meta -->
+  <meta name="description" content="{% block meta_description %}Kullanıcıların kararsız kaldıkları konuları anketlere dönüştürüp topluluğa danıştığı sosyal karar platformu.{% endblock %}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Kararsızım">
+  <meta property="og:title" content="{% block og_title %}{% block title_inner %}Kararsızım — Sen sor, kalabalık karar versin{% endblock %}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}Kararsız kaldığın konuları hemen sor, anlık sonuçları gör.{% endblock %}">
+  <meta property="og:image" content="{% block og_image %}{% static 'img/og-default.svg' %}{% endblock %}">
+  
+  <!-- Fonts: Bricolage Grotesque, Inter, JetBrains Mono (latin-ext dahil) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap&subset=latin,latin-ext" rel="stylesheet">
+  
   <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
   <link rel="stylesheet" href="{% static 'css/components.css' %}">

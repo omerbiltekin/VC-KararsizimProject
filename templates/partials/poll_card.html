@@ -1,0 +1,12 @@
+{% load poll_extras %}
+<article class="card poll-card">
+  <p class="poll-card__meta">
+    <a href="{% url 'polls:profile' poll.author.username %}">@{{ poll.author.username }}</a>
+    · <time datetime="{{ poll.created_at|date:'c' }}">{{ poll.created_at|relative_time }}</time>
+  </p>
+  <h2 class="poll-card__question"><a href="{{ poll.get_absolute_url }}">{{ poll.question }}</a></h2>
+  {% include "partials/decision_bar.html" with results=poll.results %}
+  <p class="poll-card__footer">
+    <span class="mono">{{ poll.total_votes }}</span> kişi oy verdi{% if not poll.is_open %} · Kapalı{% endif %}
+  </p>
+</article>

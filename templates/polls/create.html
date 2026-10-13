@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Anket oluştur — Kararsızım{% endblock %}
+
+{% block content %}
+  <section class="card card--wide">
+    <h1>Anket oluştur</h1>
+    {% if form.non_field_errors %}
+      <div class="notice notice--error" role="alert">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+      </div>
+    {% endif %}
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "partials/form_field.html" with field=form.question %}
+      {% include "partials/form_field.html" with field=form.description %}
+
+      <fieldset class="field options">
+        <legend class="field__label">Seçenekler (en az 2, en fazla 5)</legend>
+        <ul class="options__list" data-option-list>
+          {% for value in form.display_option_values %}
+            <li class="options__row">
+              <input type="text" name="option" maxlength="80" value="{{ value }}" placeholder="Seçenek {{ forloop.counter }}" aria-label="Seçenek {{ forloop.counter }}">
+              <button type="button" class="btn btn--secondary" data-remove-option hidden>Kaldır</button>
+            </li>
+          {% endfor %}
+        </ul>
+        <template data-option-template>
+          <li class="options__row">
+            <input type="text" name="option" maxlength="80" value="">
+            <button type="button" class="btn btn--secondary" data-remove-option>Kaldır</button>
+          </li>
+        </template>
+        <button type="button" class="btn btn--secondary" data-add-option hidden>Seçenek ekle</button>
+      </fieldset>
+
+      <button type="submit" class="btn btn--primary btn--block">Anket oluştur</button>
+    </form>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'js/poll-form.js' %}" defer></script>
+{% endblock %}

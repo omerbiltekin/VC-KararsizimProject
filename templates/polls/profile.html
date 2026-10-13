@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}@{{ profile_user.username }} — Kararsızım{% endblock %}
+
+{% block content %}
+  <header class="profile-header">
+    <h1 class="page-title">@{{ profile_user.username }}</h1>
+    <p class="profile-header__stats">
+      <span class="mono">{{ stats.poll_count }}</span> anket ·
+      <span class="mono">{{ stats.votes_received }}</span> oy aldı
+    </p>
+  </header>
+  {% include "partials/poll_list.html" %}
+{% endblock %}

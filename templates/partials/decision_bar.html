@@ -1,0 +1,12 @@
+<div class="decision-bar" role="img" aria-label="Oy dağılımı">
+  {% if results.total %}
+    {% for option in results.options %}
+      {% if option.percent %}
+        <span class="decision-bar__segment decision-bar__segment--{{ option.position }}" style="width: {{ option.percent }}%">
+          <span class="sr-only">{{ option.text }} %{{ option.percent }}</span>
+        </span>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+</div>
+<p class="badge badge--{{ results.badge_level }}">{{ results.badge_text }}</p>

@@ -10,7 +10,7 @@ from django.utils import timezone
 from accounts.models import User
 from polls.models import Option, Poll, Vote
 
-DEMO_USERS = ["ayse_demo", "mehmet_demo", "zeynep_demo"]
+DEMO_USERS = ["yigitb", "kardelenb", "emree"]
 DEMO_PASSWORD = "demo12345"
 
 QUESTIONS = [

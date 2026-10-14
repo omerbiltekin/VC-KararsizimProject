@@ -10,8 +10,8 @@ from django.utils import timezone
 from accounts.models import User
 from polls.models import Option, Poll, Vote
 
-DEMO_USERS = ["yigitb", "kardelenb", "emree"]
-DEMO_PASSWORD = "demo12345"
+DEMO_USERS = ["yigitb", "kardelenb", "emree", "ilyaso"]
+DEMO_PASSWORD = "demohesap3577!"
 
 QUESTIONS = [
     ("Bugün sinemaya mı gitsem, restorana mı?", ["Sinema", "Restoran"]),
@@ -39,12 +39,11 @@ class Command(BaseCommand):
 
         users = []
         for username in DEMO_USERS:
-            user, created = User.objects.get_or_create(
+            user, _ = User.objects.get_or_create(
                 username=username, defaults={"email": f"{username}@example.com"}
             )
-            if created:
-                user.set_password(DEMO_PASSWORD)
-                user.save()
+            user.set_password(DEMO_PASSWORD)
+            user.save()
             users.append(user)
 
         Poll.objects.filter(author__in=users).delete()

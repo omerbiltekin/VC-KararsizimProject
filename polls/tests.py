@@ -444,3 +444,77 @@ class OwnerActionTests(TestCase):
         self.assertNotContains(self.client.get(url), "Anketi kapat")
         self.client.force_login(self.author)
         self.assertContains(self.client.get(url), "Anketi kapat")
+
+
+class SecurityAndFunctionalFixTests(TestCase):
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.author = User.objects.create_user("yazar2", "yazar2@example.com", "guclu-parola-123")
+        self.poll = make_poll(self.author, options=("Secenek 1", "Secenek 2"))
+        self.options = list(self.poll.options.all())
+        self.vote_url = reverse("polls:vote", args=[self.poll.public_id])
+
+    def tearDown(self):
+        from django.core.cache import cache
+        cache.clear()
+
+    def test_anonymous_then_login_double_vote_prevented(self):
+        # 1. Anonim olarak oy ver
+        res1 = self.client.post(self.vote_url, {"option_id": self.options[0].id})
+        self.assertEqual(res1.status_code, 302)
+        self.options[0].refresh_from_db()
+        self.assertEqual(self.options[0].vote_count, 1)
+
+        # 2. Kullanıcı giriş yapsın
+        voter = User.objects.create_user("voter1", "voter1@example.com", "guclu-parola-123")
+        self.client.force_login(voter)
+
+        # 3. Aynı ankete giriş yaptıktan sonra tekrar oy vermeye çalışsın
+        res2 = self.client.post(self.vote_url, {"option_id": self.options[1].id})
+        # AlreadyVoted (409) veya redirect ile engellenmeli
+        self.assertIn(res2.status_code, (409, 302))
+        self.options[1].refresh_from_db()
+        self.assertEqual(self.options[1].vote_count, 0)  # İkinci oy sayılmamalı!
+        self.poll.refresh_from_db()
+        self.assertEqual(self.poll.total_votes, 1)
+
+    def test_expired_poll_lazy_auto_closed(self):
+        # Süresi geçmiş anket
+        Poll.objects.filter(pk=self.poll.pk).update(
+            closes_at=timezone.now() - timedelta(minutes=10),
+            status=Poll.Status.ACTIVE,
+        )
+        # Detay sayfası çağrıldığında
+        self.client.get(self.poll.get_absolute_url())
+        self.poll.refresh_from_db()
+        self.assertEqual(self.poll.status, Poll.Status.CLOSED)
+
+    def test_vote_rate_limiting(self):
+        from django.core.cache import cache
+        cache.clear()
+        # 30'dan fazla oy isteği 429 almalı
+        for _ in range(30):
+            self.client.post(self.vote_url, {"option_id": self.options[0].id}, HTTP_ACCEPT="application/json")
+        res_blocked = self.client.post(self.vote_url, {"option_id": self.options[0].id}, HTTP_ACCEPT="application/json")
+        self.assertEqual(res_blocked.status_code, 429)
+
+    def test_register_non_field_errors_rendered(self):
+        import time
+        from django.core.cache import cache
+        cache.clear()
+        now = int(time.time())
+        cache.set(f"ratelimit:register:127.0.0.1:{now // 60}", 20, timeout=70)
+        response = self.client.post(
+            reverse("accounts:register"),
+            {
+                "username": "yeni_uye",
+                "email": "yeni@example.com",
+                "password1": "guclu-parola-123",
+                "password2": "guclu-parola-123",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="notice notice--error"')
+        self.assertContains(response, "Çok fazla kayıt isteği")
+

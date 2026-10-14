@@ -32,6 +32,13 @@ import sys
 IS_TESTING = len(sys.argv) > 1 and sys.argv[1] == "test"
 
 if not DEBUG and not IS_TESTING:
+    if SECRET_KEY == "dev-only-insecure-key":
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured("DJANGO_SECRET_KEY ortam değişkeni canlı ortamda zorunludur!")
+    if VOTER_KEY_SALT == "dev-only-voter-salt":
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured("VOTER_KEY_SALT ortam değişkeni canlı ortamda zorunludur!")
+
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = os.environ.get("DJANGO_SECURE_SSL_REDIRECT", "true").lower() in ("1", "true", "yes")
     SESSION_COOKIE_SECURE = True

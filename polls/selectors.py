@@ -75,21 +75,30 @@ def get_poll(public_id):
     )
 
 
-def find_vote(poll, user, voter_key):
+def find_vote(poll, user, voter_key, session_voted_poll_ids=None):
     votes = Vote.objects.filter(poll=poll)
     if user is not None:
-        return votes.filter(user=user).first()
+        user_vote = votes.filter(user=user).first()
+        if user_vote:
+            return user_vote
     if voter_key:
-        return votes.filter(user__isnull=True, voter_key=voter_key).first()
+        key_vote = votes.filter(voter_key=voter_key).first()
+        if key_vote:
+            return key_vote
+    if session_voted_poll_ids and poll.id in session_voted_poll_ids:
+        return votes.filter(user__isnull=True).order_by("-created_at").first()
     return None
 
 
-def voted_poll_ids(poll_ids, user, voter_key):
-    votes = Vote.objects.filter(poll_id__in=poll_ids)
-    if user is not None:
-        votes = votes.filter(user=user)
-    elif voter_key:
-        votes = votes.filter(user__isnull=True, voter_key=voter_key)
-    else:
+def voted_poll_ids(poll_ids, user, voter_key, session_voted_poll_ids=None):
+    if not poll_ids:
         return set()
-    return set(votes.values_list("poll_id", flat=True))
+    q = Q()
+    if user is not None:
+        q |= Q(user=user)
+    if voter_key:
+        q |= Q(voter_key=voter_key)
+    result = set(Vote.objects.filter(poll_id__in=poll_ids).filter(q).values_list("poll_id", flat=True)) if q else set()
+    if session_voted_poll_ids:
+        result |= (set(poll_ids) & set(session_voted_poll_ids))
+    return result

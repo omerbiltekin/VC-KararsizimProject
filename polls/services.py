@@ -37,14 +37,21 @@ def create_poll(*, author, question, description, option_texts):
     return poll
 
 
-def has_voted(poll, user, voter_key):
+def has_voted(poll, user, voter_key, session_voted_poll_ids=None):
     votes = Vote.objects.filter(poll=poll)
-    if user is not None:
-        return votes.filter(user=user).exists()
-    return votes.filter(user__isnull=True, voter_key=voter_key).exists()
+    if user is not None and votes.filter(user=user).exists():
+        return True
+    if voter_key and votes.filter(voter_key=voter_key).exists():
+        return True
+    if session_voted_poll_ids and poll.id in session_voted_poll_ids:
+        return True
+    return False
 
 
-def cast_vote(*, poll, option_id, user, voter_key):
+def cast_vote(*, poll, option_id, user, voter_key, session_voted_poll_ids=None):
+    if poll.status == Poll.Status.ACTIVE and poll.closes_at and poll.closes_at <= timezone.now():
+        close_poll(poll)
+
     if not poll.is_open:
         raise PollClosed
 
@@ -53,7 +60,7 @@ def cast_vote(*, poll, option_id, user, voter_key):
     except (TypeError, ValueError, Option.DoesNotExist):
         raise InvalidOption
 
-    if has_voted(poll, user, voter_key):
+    if has_voted(poll, user, voter_key, session_voted_poll_ids=session_voted_poll_ids):
         raise AlreadyVoted
 
     # Yarış durumunda ikinci istek veritabanı kısıtına takılır.

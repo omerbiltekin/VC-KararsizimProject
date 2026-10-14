@@ -9,7 +9,9 @@ from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
-from . import selectors, services, utils
+from django.utils import timezone
+
+from . import ratelimit, selectors, services, utils
 from .forms import PollForm
 from .models import Poll
 from .results import attach_results, build_results, can_see_results, results_payload
@@ -38,10 +40,15 @@ def _viewer(request):
     return request.user if request.user.is_authenticated else None
 
 
+def _session_voted(request):
+    return set(request.session.get("voted_polls", []))
+
+
 def _attach_for_viewer(request, polls):
     user = _viewer(request)
+    session_voted = _session_voted(request)
     voted_ids = selectors.voted_poll_ids(
-        [poll.id for poll in polls], user, utils.existing_voter_key(request)
+        [poll.id for poll in polls], user, utils.existing_voter_key(request), session_voted
     )
     return attach_results(
         polls, viewer_id=user.id if user else None, voted_poll_ids=voted_ids
@@ -59,12 +66,15 @@ def _remember_vote(request, poll_id):
     voted = request.session.get("voted_polls", [])
     if poll_id not in voted:
         request.session["voted_polls"] = voted + [poll_id]
+        request.session.modified = True
 
 
 def _get_poll_or_404(public_id):
     poll = selectors.get_poll(public_id)
     if poll is None:
         raise Http404
+    if poll.status == Poll.Status.ACTIVE and poll.closes_at and poll.closes_at <= timezone.now():
+        services.close_poll(poll)
     return poll
 
 
@@ -98,14 +108,16 @@ def index(request):
 def detail(request, public_id):
     poll = _get_poll_or_404(public_id)
     user = _viewer(request)
-    vote = selectors.find_vote(poll, user, utils.existing_voter_key(request))
+    session_voted = _session_voted(request)
+    vote = selectors.find_vote(poll, user, utils.existing_voter_key(request), session_voted)
     voted_option_id = vote.option_id if vote else None
-    reveal = can_see_results(poll, viewer_id=user.id if user else None, voted=vote is not None)
+    has_voted = vote is not None or (poll.id in session_voted)
+    reveal = can_see_results(poll, viewer_id=user.id if user else None, voted=has_voted)
     context = {
         "poll": poll,
         "results": build_results(poll, reveal=reveal),
         "voted_option_id": voted_option_id,
-        "can_vote": poll.is_open and vote is None,
+        "can_vote": poll.is_open and not has_voted,
         "is_author": user is not None and poll.author_id == user.id,
     }
     return render(request, "polls/detail.html", context)
@@ -116,6 +128,17 @@ def vote(request, public_id):
     poll = _get_poll_or_404(public_id)
     user = _viewer(request)
     voter_key = utils.get_voter_key(request)
+    session_voted = _session_voted(request)
+
+    ip = ratelimit.get_client_ip(request)
+    if ratelimit.is_rate_limited(f"vote:{ip}", limit=30, period=60):
+        if _wants_json(request):
+            return JsonResponse(
+                {"ok": False, "message": "Çok fazla istek gönderdin. Lütfen biraz bekle.", "results": None},
+                status=429,
+            )
+        messages.error(request, "Çok fazla istek gönderdin. Lütfen biraz bekle.")
+        return redirect(poll.get_absolute_url())
 
     status, message, voted_option_id = 200, MESSAGE_VOTED, None
     try:
@@ -124,6 +147,7 @@ def vote(request, public_id):
             option_id=request.POST.get("option_id"),
             user=user,
             voter_key=voter_key,
+            session_voted_poll_ids=session_voted,
         )
         voted_option_id = option.id
         _remember_vote(request, poll.id)
@@ -133,7 +157,7 @@ def vote(request, public_id):
         status, message = 400, MESSAGE_INVALID_OPTION
     except services.AlreadyVoted:
         status, message = 409, MESSAGE_ALREADY_VOTED
-        existing = selectors.find_vote(poll, user, voter_key)
+        existing = selectors.find_vote(poll, user, voter_key, session_voted)
         voted_option_id = existing.option_id if existing else None
         _remember_vote(request, poll.id)
 
@@ -158,8 +182,10 @@ def vote(request, public_id):
 def results(request, public_id):
     poll = _get_poll_or_404(public_id)
     user = _viewer(request)
-    vote = selectors.find_vote(poll, user, utils.existing_voter_key(request))
-    reveal = can_see_results(poll, viewer_id=user.id if user else None, voted=vote is not None)
+    session_voted = _session_voted(request)
+    vote = selectors.find_vote(poll, user, utils.existing_voter_key(request), session_voted)
+    has_voted = vote is not None or (poll.id in session_voted)
+    reveal = can_see_results(poll, viewer_id=user.id if user else None, voted=has_voted)
     payload = results_payload(
         poll, voted_option_id=vote.option_id if vote else None, reveal=reveal
     )

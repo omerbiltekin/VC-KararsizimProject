@@ -7,6 +7,6 @@
   <h2 class="poll-card__question"><a href="{{ poll.get_absolute_url }}">{{ poll.question }}</a></h2>
   {% include "partials/decision_bar.html" with results=poll.results %}
   <p class="poll-card__footer">
-    <span class="mono">{{ poll.total_votes }}</span> kişi oy verdi{% if not poll.is_open %} · Kapalı{% endif %}
+    <span class="mono">{{ poll.results.total }}</span> kişi oy verdi{% if not poll.is_open %} · Kapalı{% endif %}
   </p>
 </article>

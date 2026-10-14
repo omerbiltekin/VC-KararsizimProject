@@ -5,6 +5,11 @@
 {% block content %}
   <section class="card card--narrow">
     <h1>Kayıt ol</h1>
+    {% if form.non_field_errors %}
+      <div class="notice notice--error" role="alert">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+      </div>
+    {% endif %}
     <form method="post" novalidate>
       {% csrf_token %}
       {% for field in form %}
